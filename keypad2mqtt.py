@@ -3,14 +3,16 @@ import argparse
 import traceback
 import sys
 import evdev
+import glob
 
 parser = argparse.ArgumentParser(description='keypad2mqtt')
 parser.add_argument("hostname", help="broker hostname")
+parser.add_argument('--device', '-d', dest='device', help='input device name')
 parser.add_argument('--port', dest="port", type=int, default=1883, help='broker port (default: %(default)s)')
 parser.add_argument('--username', '-u', dest='username', help='broker username')
 parser.add_argument('--password', '-p', dest='password', help='broker password')
-parser.add_argument('--device', '-i', dest='device', default='/dev/input/event0', help='input device path (default: %(default)s)')
 args = parser.parse_args()
+
 
 mqtt_client = mqtt.Client(client_id="keypad")
 
@@ -63,8 +65,18 @@ try:
         evdev.ecodes.KEY_F16: "F16",
     }
     from evdev import InputDevice, categorize, ecodes
-    dev = InputDevice(args.device)
+    dev = None
+    for file in glob.glob("/dev/input/event*"):
+        dev = InputDevice(file)
+        if dev.name == args.device:
+            print(f"keypad found {args.device} {file}")
+        else:
+            dev = None
+    if dev == None:
+        raise Exception(f"keypad not found {args.device}")
+
     KEY_DOWN = 1
+
     for event in dev.read_loop():
         if event.type == ecodes.EV_KEY and event.value == KEY_DOWN:
             # print(event, event.code, event.type, event.value)
