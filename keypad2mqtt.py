@@ -70,9 +70,10 @@ try:
         dev = InputDevice(file)
         if dev.name == args.device:
             print(f"keypad found {args.device} {file}")
+            break
         else:
             dev = None
-    if dev == None:
+    if dev is None:
         raise Exception(f"keypad not found {args.device}")
 
     KEY_DOWN = 1
